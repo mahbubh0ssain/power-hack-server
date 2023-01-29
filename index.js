@@ -33,15 +33,28 @@ dbConnect();
 const UsersCollection = client.db("Power-Hack").collection("usersCollection");
 
 //user registration
-app.put("/registration", async (req, res) => {
+app.post("/registration", async (req, res) => {
   try {
-    const user = req.body;
-    const result = await UsersCollection.updateOne(
-      { email: req?.body?.email },
-      { $set: user },
-      { upsert: true }
-    );
-    const token = jwt.sign(user.email, process.env.ACCESS_TOKEN);
+    const token = jwt.sign(req?.body?.email, process.env.ACCESS_TOKEN);
+
+    const isExist = await UsersCollection.findOne({ email: req?.body?.email });
+
+    if (isExist) {
+      return res.send({
+        message: "You are already registered",
+      });
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(req?.body?.password, salt);
+
+    const user = {
+      email: req?.body?.email,
+      name: req?.body?.name,
+      password: hashedPassword,
+    };
+
+    const result = await UsersCollection.insertOne(user);
 
     res.send({
       success: true,
