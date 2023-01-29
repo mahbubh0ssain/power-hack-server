@@ -30,13 +30,22 @@ const dbConnect = async () => {
 };
 dbConnect();
 
+// user Collection
 const UsersCollection = client.db("Power-Hack").collection("usersCollection");
+
+// generate token for users
+const getToken = (email) => {
+  const token = jwt.sign(email, process.env.ACCESS_TOKEN);
+  return token;
+};
 
 //user registration
 app.post("/registration", async (req, res) => {
   try {
-    const token = jwt.sign(req?.body?.email, process.env.ACCESS_TOKEN);
+    // generate token
+    const token = getToken(req?.body?.email);
 
+    //check users existence
     const isExist = await UsersCollection.findOne({ email: req?.body?.email });
 
     if (isExist) {
@@ -45,9 +54,11 @@ app.post("/registration", async (req, res) => {
       });
     }
 
+    // password hashed
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(req?.body?.password, salt);
 
+    // user password replaced with hashed password
     const user = {
       email: req?.body?.email,
       name: req?.body?.name,
@@ -60,6 +71,67 @@ app.post("/registration", async (req, res) => {
       success: true,
       result,
       token,
+    });
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+// user login
+app.post("/login", async (req, res) => {
+  try {
+    //check if user is already registered
+    const isExist = await UsersCollection.findOne({ email: req.body?.email });
+    if (isExist === null) {
+      return res.send({
+        success: false,
+        message: "User does not exist",
+      });
+    }
+
+    // match user password
+    const isMatch = await bcrypt.compare(
+      req?.body?.password,
+      isExist?.password
+    );
+    if (!isMatch) {
+      return res.send({
+        success: false,
+        message: "Wrong password",
+      });
+    }
+
+    // token
+    const token = getToken(req?.body?.email);
+    res.send({
+      success: true,
+      token,
+      message: "Login successful",
+    });
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err?.message,
+    });
+  }
+});
+
+// billing Collection
+const BillingCollection = client
+  .db("Power-Hack")
+  .collection("billingCollection");
+
+// post billing
+app.post("/add-billing", async (req, res) => {
+  try {
+    const bill = await req.body;
+    const result = await BillingCollection.insertOne(bill);
+    res.send({
+      success: true,
+      result,
     });
   } catch (err) {
     res.send({
