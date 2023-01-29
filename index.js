@@ -144,7 +144,7 @@ app.post("/add-billing", async (req, res) => {
 // get all billings
 app.get("/billing-list", async (req, res) => {
   try {
-    const result = await BillingCollection.find({}).toArray();
+    const result = await BillingCollection.find({}).sort({ _id: -1 }).toArray();
 
     res.send({
       success: true,
@@ -154,6 +154,27 @@ app.get("/billing-list", async (req, res) => {
     res.send({
       success: false,
       message: err.message,
+    });
+  }
+});
+
+// update billings by id
+app.patch("/update-billing/:id", async (req, res) => {
+  try {
+    const id = req?.params?.id;
+    const bill = await req?.body;
+    const result = await BillingCollection.updateOne(
+      { _id: ObjectId(id) },
+      { $set: bill }
+    );
+    res.send({
+      success: true,
+      result,
+    });
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err?.message,
     });
   }
 });
