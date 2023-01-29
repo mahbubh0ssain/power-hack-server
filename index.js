@@ -145,6 +145,8 @@ app.post("/add-billing", async (req, res) => {
 app.get("/billing-list", async (req, res) => {
   try {
     const search = await req.query.search;
+    const page = req.query.page;
+    const perPage = parseInt(req.query.perPage);
 
     let query = {};
     if (search.length > 0) {
@@ -154,13 +156,18 @@ app.get("/billing-list", async (req, res) => {
         },
       };
     }
+
     const result = await BillingCollection.find(query)
       .sort({ _id: -1 })
+      .skip(page * perPage)
+      .limit(perPage)
       .toArray();
+    const count = await BillingCollection.estimatedDocumentCount();
 
     res.send({
       success: true,
       result,
+      count,
     });
   } catch (err) {
     res.send({
