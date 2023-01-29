@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
   res.send("Power Hack server is running successfully");
 });
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@power-hack.svkllsd.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -137,6 +137,40 @@ app.post("/add-billing", async (req, res) => {
     res.send({
       success: false,
       message: err.message,
+    });
+  }
+});
+
+// get all billings
+app.get("/billing-list", async (req, res) => {
+  try {
+    const result = await BillingCollection.find({}).toArray();
+
+    res.send({
+      success: true,
+      result,
+    });
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+//delete bill by id
+app.delete("/delete-billing/:id", async (req, res) => {
+  try {
+    const id = req?.params?.id;
+    const result = await BillingCollection.deleteOne({ _id: ObjectId(id) });
+    res.send({
+      success: true,
+      result,
+    });
+  } catch (err) {
+    res.send({
+      success: false,
+      message: err?.message,
     });
   }
 });
