@@ -144,7 +144,19 @@ app.post("/add-billing", async (req, res) => {
 // get all billings
 app.get("/billing-list", async (req, res) => {
   try {
-    const result = await BillingCollection.find({}).sort({ _id: -1 }).toArray();
+    const search = await req.query.search;
+
+    let query = {};
+    if (search.length > 0) {
+      query = {
+        $text: {
+          $search: search,
+        },
+      };
+    }
+    const result = await BillingCollection.find(query)
+      .sort({ _id: -1 })
+      .toArray();
 
     res.send({
       success: true,
