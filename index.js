@@ -141,7 +141,7 @@ const BillingCollection = client
   .collection("billingCollection");
 
 // post billing
-app.post("/api/add-billing", async (req, res) => {
+app.post("/api/add-billing", verifyJWT, async (req, res) => {
   try {
     const bill = await req.body;
     const result = await BillingCollection.insertOne(bill);
@@ -194,7 +194,7 @@ app.get("/api/billing-list", async (req, res) => {
 });
 
 // update billings by id
-app.patch("/api/update-billing/:id", async (req, res) => {
+app.patch("/api/update-billing/:id", verifyJWT, async (req, res) => {
   try {
     const id = req?.params?.id;
     const bill = await req?.body;
@@ -215,7 +215,7 @@ app.patch("/api/update-billing/:id", async (req, res) => {
 });
 
 //delete bill by id
-app.delete("/api/delete-billing/:id", async (req, res) => {
+app.delete("/api/delete-billing/:id", verifyJWT, async (req, res) => {
   try {
     const id = req?.params?.id;
     const result = await BillingCollection.deleteOne({ _id: ObjectId(id) });
