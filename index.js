@@ -39,8 +39,24 @@ const getToken = (email) => {
   return token;
 };
 
+// verify JWT
+const verifyJWT = (req, res, next) => {
+  const headerToken = req.headers.authorization;
+  if (!headerToken) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token = headerToken.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Access forbidden" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 //user registration
-app.post("/registration", async (req, res) => {
+app.post("/api/registration", async (req, res) => {
   try {
     // generate token
     const token = getToken(req?.body?.email);
@@ -81,7 +97,7 @@ app.post("/registration", async (req, res) => {
 });
 
 // user login
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     //check if user is already registered
     const isExist = await UsersCollection.findOne({ email: req.body?.email });
@@ -125,7 +141,7 @@ const BillingCollection = client
   .collection("billingCollection");
 
 // post billing
-app.post("/add-billing", async (req, res) => {
+app.post("/api/add-billing", async (req, res) => {
   try {
     const bill = await req.body;
     const result = await BillingCollection.insertOne(bill);
@@ -142,7 +158,7 @@ app.post("/add-billing", async (req, res) => {
 });
 
 // get all billings
-app.get("/billing-list", async (req, res) => {
+app.get("/api/billing-list", async (req, res) => {
   try {
     const search = await req.query.search;
     const page = req.query.page;
@@ -178,7 +194,7 @@ app.get("/billing-list", async (req, res) => {
 });
 
 // update billings by id
-app.patch("/update-billing/:id", async (req, res) => {
+app.patch("/api/update-billing/:id", async (req, res) => {
   try {
     const id = req?.params?.id;
     const bill = await req?.body;
@@ -199,7 +215,7 @@ app.patch("/update-billing/:id", async (req, res) => {
 });
 
 //delete bill by id
-app.delete("/delete-billing/:id", async (req, res) => {
+app.delete("/api/delete-billing/:id", async (req, res) => {
   try {
     const id = req?.params?.id;
     const result = await BillingCollection.deleteOne({ _id: ObjectId(id) });
